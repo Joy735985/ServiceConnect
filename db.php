@@ -1,18 +1,33 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', '1');
-mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT); // make mysqli throw
+// db.php - Render/Docker/Local compatible DB connector
 
-$servername = "127.0.0.1";  // ✅ localhost → 127.0.0.1
-$username   = "root";
-$password   = "";
-$database   = "my_db";
+date_default_timezone_set('Asia/Dhaka');
 
-$conn = new mysqli($servername, $username, $password, $database);
+// Read from environment variables first (Render / Docker)
+$host = getenv('DB_HOST');
+$db   = getenv('DB_NAME');
+$user = getenv('DB_USER');
+$pass = getenv('DB_PASS');
+$port = getenv('DB_PORT'); // optional
 
+// Fallback to local defaults if env not set (XAMPP / localhost)
+if (!$host) $host = "localhost";
+if (!$db)   $db   = "my_db";     // ✅ তোমার লোকাল DB নাম এখানে সেট করা হলো
+if (!$user) $user = "root";
+if ($pass === false) $pass = "";
+if (!$port) $port = 3306;
+
+// Create connection
+$conn = new mysqli($host, $user, $pass, $db, (int)$port);
+
+// Connection check
 if ($conn->connect_error) {
-  die("❌ Connection failed: " . $conn->connect_error);
+    die("Database connection failed: " . $conn->connect_error);
 }
 
-//echo "✅ Database connected successfully!";
+// Set charset to support Bangla/emoji/etc.
+$conn->set_charset("utf8mb4");
+
+// Optional: strict mode for better data integrity
+$conn->query("SET sql_mode = 'STRICT_ALL_TABLES'");
 ?>
